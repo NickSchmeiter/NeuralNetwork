@@ -5,7 +5,7 @@ from sklearn import preprocessing
 import pickle
 
 # Define the path to the data folder
-data_folder = '/Users/nickschmeiter/Desktop/KI-Projekt/Eperiment1/data/'
+data_folder = '/Users/nickschmeiter/Downloads/NeuralNetwork/Experiment1/Data'
 
 # Initialize an empty list to store individual dataframes
 dataframes = []
@@ -33,7 +33,7 @@ T = timedelta(days=142)
 Tindex = 100
 
 # Adjust the path to match the correct structure
-base_path = '/Users/nickschmeiter/Desktop/NeuralNetwork/Eperiment1/Data/Samples/'
+base_path = '/Users/nickschmeiter/Downloads/NeuralNetwork/Experiment1/Data'
 
 if not os.path.exists(base_path):
     os.makedirs(base_path)  # Ensure the directory exists

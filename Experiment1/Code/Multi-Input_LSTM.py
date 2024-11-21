@@ -62,7 +62,7 @@ class CustomDataset(Dataset):
     def __init__(self):
         
         # Define the correct path to the Samples directory
-        self.base_path = '/Users/nickschmeiter/Desktop/KI-Projekt/Eperiment1/Data/Samples/'
+        self.base_path = '/Users/nickschmeiter/Downloads/NeuralNetwork/Experiment1/Data'
         
         # Make a list containing the paths to all your .pkl files
         self.paths = [os.path.join(self.base_path, file) for file in os.listdir(self.base_path) if file.endswith('.pkl')]
