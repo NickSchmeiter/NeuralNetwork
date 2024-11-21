@@ -49,7 +49,10 @@ while time < end - T:
     #normalize
     x = table.values #returns a numpy array
     min_max_scaler = preprocessing.MinMaxScaler()
+    if x.shape[1] == 0:
+        continue
     x_scaled = min_max_scaler.fit_transform(x)
+
     table = pd.DataFrame(x_scaled, columns=table.columns)
     #check for size to prevent out of bounds error
     if len(table)<=Tindex:
