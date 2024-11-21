@@ -33,7 +33,7 @@ T = timedelta(days=142)
 Tindex = 100
 
 # Adjust the path to match the correct structure
-base_path = '/Users/nickschmeiter/Desktop/KI-Projekt/Eperiment1/Data/Samples/'
+base_path = '/Users/nickschmeiter/Desktop/NeuralNetwork/Eperiment1/Data/Samples/'
 
 if not os.path.exists(base_path):
     os.makedirs(base_path)  # Ensure the directory exists
