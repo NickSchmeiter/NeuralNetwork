@@ -45,7 +45,14 @@ while time < end - T:
     table = pd.pivot_table(subset, index=['Date'], columns=['Ticker'])
     table.columns = table.columns.get_level_values(1)
     table = table.dropna(axis=1)
+    if table.shape[1] == 0:
+        print(f"No valid data after dropna at time {time}. Skipping...")
+        time = time + timedelta(days=1)
+        continue
     table = table.loc[:,table.nunique()!=1]
+    if table.shape[1] == 0:
+        print(f"No non-constant data at time {time}. Skipping...")
+        continue
     #normalize
     x = table.values #returns a numpy array
     min_max_scaler = preprocessing.MinMaxScaler()
@@ -62,6 +69,9 @@ while time < end - T:
     correlations = table.corr()
     correlations = correlations.dropna(axis=1)
     correlations = correlations.loc[:, ~correlations.columns.duplicated()]
+    if correlations.shape[1] == 0:
+        print(f"No correlations calculated at time {time}. Skipping...")
+        continue
 
     
     for col in correlations.columns:
@@ -73,6 +83,11 @@ while time < end - T:
         item['X_p'] = table[pos_stocks]
         neg_stocks = list(correlations[col].nsmallest(20).index)
         item['X_n'] = table[neg_stocks]
+
+        if len(pos_stocks) < 20 or len(neg_stocks) < 20:
+            print(f"Not enough correlated stocks for {col} at time {time}. Skipping...")
+            time = time + timedelta(days=1)
+            continue
         # Use the base_path to construct the file path
         file_name = f"{col}_{str(time)}.pkl"
         file_path = os.path.join(base_path, file_name)
