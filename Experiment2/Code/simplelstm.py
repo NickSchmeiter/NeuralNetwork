@@ -202,8 +202,8 @@ def train_one_epoch():
 
         if batch_index % 100 == 99:  # print every 100 batches
             avg_loss_across_batches = running_loss / 100
-            print('Batch {0}, Loss: {1:.3f}'.format(batch_index+1,
-                                                    avg_loss_across_batches))
+            #print('Batch {0}, Loss: {1:.3f}'.format(batch_index+1,
+           #                                         avg_loss_across_batches))
             running_loss = 0.0
 
 def validate_one_epoch():
