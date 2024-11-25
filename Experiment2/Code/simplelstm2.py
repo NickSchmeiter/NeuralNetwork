@@ -153,7 +153,7 @@ test_dataset = TimeSeriesDataset(
 )
 
 
-batch_size = 16
+batch_size = 640
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
@@ -182,7 +182,7 @@ class LSTM(nn.Module):
         out, _ = self.lstm(x, (h0, c0))
         out = self.fc(out[:, -1, :])
         return out
-model= LSTM(1, 20, 2).to(device)
+model= LSTM(1, 100, 3).to(device)
 
 def train_one_epoch():
     model.train(True)
@@ -225,7 +225,7 @@ def validate_one_epoch():
     print()
 
 learning_rate = 0.001
-num_epochs = 5
+num_epochs = 2
 loss_function = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
