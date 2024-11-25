@@ -32,14 +32,23 @@ for filename in os.listdir(data_folder):
 all_data_df = pd.concat(dataframes, ignore_index=True)
 
 
-all_data_df= all_data_df[["Date","Close"]]
+all_data_df= all_data_df[["Date","Close","Ticker"]]
 
 #print(all_data_df.head())
 
 all_data_df['Date'] = pd.to_datetime(all_data_df['Date'])
+# Create a mapping of tickers to numeric IDs
+ticker_to_id = {ticker: idx for idx, ticker in enumerate(all_data_df['Ticker'].unique())}
+
+# Add the numeric ID to the dataframe
+all_data_df['Ticker_ID'] = all_data_df['Ticker'].map(ticker_to_id)
+all_data_df.drop(columns=['Ticker'], inplace=True)
+print(all_data_df.head())
+grouped = all_data_df.groupby('Ticker_ID')
 
 #plt.plot(all_data_df['Date'], all_data_df['Close'])
 #plt.show()
+
 
 def prepare_dataframe_for_lstm(df, n_steps):
     df = dc(df)
@@ -54,56 +63,73 @@ def prepare_dataframe_for_lstm(df, n_steps):
     return df
 
 lookback = 20
-shifted_df = prepare_dataframe_for_lstm(all_data_df, lookback)
+prepared_data = []
+for Ticker_ID, group in grouped:
+    group = group.sort_values('Date')  # Ensure data is sorted by date
+    processed_group = prepare_dataframe_for_lstm(group[['Date', 'Close']], lookback)
+    processed_group['Ticker_ID'] = Ticker_ID  # Add ticker column back after processing
+    prepared_data.append(processed_group)
+
+shifted_df = pd.concat(prepared_data, ignore_index=True)
 print(shifted_df.head())
 
 #shifted_df = pd.pivot_table(shifted_df, index=['Date'], columns=['Ticker'])
 
-shifted_df_as_np = shifted_df.to_numpy()
 
-scaler = preprocessing.MinMaxScaler()
-shifted_df_as_np = scaler.fit_transform(shifted_df_as_np)
-print(shifted_df_as_np)
-X = shifted_df_as_np[:, 1:]
-y = shifted_df_as_np[:, 0]
 
-print(X.shape) 
-print(y.shape)
-print(X)  
+scalers = {}
+normalized_data = []
 
-X = dc(np.flip(X, axis=1))
+for Ticker_ID, group in shifted_df.groupby('Ticker_ID'):
+    scaler = preprocessing.MinMaxScaler()
+    scaled_values = scaler.fit_transform(group.drop(columns=['Ticker_ID']).to_numpy())
+    scalers[Ticker_ID] = scaler
+    normalized_df = pd.DataFrame(scaled_values, columns=group.columns[:-1])  # Exclude Ticker
+    normalized_df['Ticker_ID'] = Ticker_ID
+    normalized_data.append(normalized_df)
 
-split_index = int(len(X) * 0.95)
+# Combine normalized data
+normalized_df = pd.concat(normalized_data, ignore_index=True)
+print(normalized_df.head())
 
-print(split_index)
 
-X_train = X[:split_index]
-X_test = X[split_index:]
+#shifted_df_as_np = shifted_df.to_numpy()
 
-y_train = y[:split_index]
-y_test = y[split_index:]
+train_data = []
+test_data = []
 
-print(X_train.shape)
-print(X_test.shape)
-print(y_train.shape)
-print(y_test.shape)
+for ticker_ID, group in normalized_df.groupby('Ticker_ID'):
+    X = group.iloc[:, 1:].values  # Use shifted Close columns
+    y = group.iloc[:, 0].values  # Target is the Close column
+    X = dc(np.flip(X, axis=1))
+    split_index = int(len(X) * 0.95)
+    X_train, X_test = X[:split_index], X[split_index:]
+    y_train, y_test = y[:split_index], y[split_index:]
 
-X_train = X_train.reshape((-1, lookback, 1))
-X_test = X_test.reshape((-1, lookback, 1))
+    num_samples_train = (X_train.shape[0] // lookback) * lookback
+    X_train = X_train[:num_samples_train]
+    y_train = y_train[:num_samples_train]
 
-y_train = y_train.reshape((-1, 1))
-y_test = y_test.reshape((-1, 1))
+    num_samples_test = (X_test.shape[0] // lookback) * lookback
+    X_test = X_test[:num_samples_test]
+    y_test = y_test[:num_samples_test]
 
-print(X_train.shape)
-print(X_test.shape)
-print(y_train.shape)
-print(y_test.shape)
+    print(f"X_train shape before reshaping: {X_train.shape}")
+    print(f"X_test shape before reshaping: {X_test.shape}")
+    print(f"y_train shape before reshaping: {y_train.shape}")
+    print(f"y_test shape before reshaping: {y_test.shape}")
+    
+    X_train = X_train.reshape((-1, lookback+1, 1))
+    X_test = X_test.reshape((-1, lookback+1,1))
+    y_train = y_train.reshape((-1, 1))
+    y_test = y_test.reshape((-1, 1))
+    
+    print(f"Ticker_ID: {ticker_ID}")
+    print(f"X_train shape: {X_train.shape}, y_train shape: {y_train.shape}")
+    print(f"X_test shape: {X_test.shape}, y_test shape: {y_test.shape}")
 
-X_train = torch.tensor(X_train).float()
-y_train = torch.tensor(y_train).float()
-X_test = torch.tensor(X_test).float()
-y_test = torch.tensor(y_test).float()
-
+    train_data.append((torch.tensor(X_train).float(), torch.tensor(y_train).float()))
+    test_data.append((torch.tensor(X_test).float(), torch.tensor(y_test).float()))
 
 class TimeSeriesDataset(Dataset):
     def __init__(self, X, y):
@@ -116,8 +142,16 @@ class TimeSeriesDataset(Dataset):
     def __getitem__(self, i):
         return self.X[i], self.y[i]
 
-train_dataset = TimeSeriesDataset(X_train, y_train)
-test_dataset = TimeSeriesDataset(X_test, y_test)
+train_dataset = TimeSeriesDataset(
+    torch.cat([data[0] for data in train_data]),
+    torch.cat([data[1] for data in train_data])
+)
+
+test_dataset = TimeSeriesDataset(
+    torch.cat([data[0] for data in test_data]),
+    torch.cat([data[1] for data in test_data])
+)
+
 
 batch_size = 16
 
@@ -148,7 +182,7 @@ class LSTM(nn.Module):
         out, _ = self.lstm(x, (h0, c0))
         out = self.fc(out[:, -1, :])
         return out
-model= LSTM(1, 64, 5).to(device)
+model= LSTM(1, 20, 2).to(device)
 
 def train_one_epoch():
     model.train(True)
@@ -200,7 +234,8 @@ for epoch in range(num_epochs):
     validate_one_epoch()
 
 with torch.no_grad():
-    predicted = model(X_train.to(device)).to('cpu').numpy()
+    X_train_tensor = torch.tensor(X_train).float().to(device)
+    predicted = model(X_train_tensor.to(device)).to('cpu').numpy()
 
 plt.plot(y_train, label='Actual Close')
 plt.plot(predicted, label='Predicted Close')
