@@ -14,9 +14,10 @@ import multi_input_lstm_layers as milstm
 
 class Net(nn.Module):
 
-    def __init__(self, seq_size, hidden_size):
+    def __init__(self, seq_size, hidden_size, num_cor=20):
         super(Net, self).__init__()
         self.seq_size = seq_size
+        self.num_cor = num_cor
         self.Y_layer = lstm.CustomLSTM(10, hidden_size) 
         self.X_p_layers = nn.ModuleList()
         self.X_n_layers = nn.ModuleList()
@@ -41,7 +42,7 @@ class Net(nn.Module):
 
         X_p_list = list()
         X_n_list = list()
-        for i in range(self.seq_size):
+        for i in range(self.num_cor):
             X_p_slice = X_p[:, :, i:i+1]  # Shape: [batch_size, seq_len, 1]
             X_n_slice = X_n[:, :, i:i+1]  # Shape: [batch_size, seq_len, 1]
 
