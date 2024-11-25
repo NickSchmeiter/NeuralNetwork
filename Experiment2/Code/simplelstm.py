@@ -113,21 +113,21 @@ for ticker_ID, group in normalized_df.groupby('Ticker_ID'):
     num_samples_test = (X_test.shape[0] // lookback) * lookback
     X_test = X_test[:num_samples_test]
     y_test = y_test[:num_samples_test]
-
+    """
     print(f"X_train shape before reshaping: {X_train.shape}")
     print(f"X_test shape before reshaping: {X_test.shape}")
     print(f"y_train shape before reshaping: {y_train.shape}")
     print(f"y_test shape before reshaping: {y_test.shape}")
-    
+    """
     X_train = X_train.reshape((-1, lookback+1, 1))
     X_test = X_test.reshape((-1, lookback+1,1))
     y_train = y_train.reshape((-1, 1))
     y_test = y_test.reshape((-1, 1))
-    
+    """
     print(f"Ticker_ID: {ticker_ID}")
     print(f"X_train shape: {X_train.shape}, y_train shape: {y_train.shape}")
     print(f"X_test shape: {X_test.shape}, y_test shape: {y_test.shape}")
-
+    """
     train_data.append((torch.tensor(X_train).float(), torch.tensor(y_train).float()))
     test_data.append((torch.tensor(X_test).float(), torch.tensor(y_test).float()))
 
