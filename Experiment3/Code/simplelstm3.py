@@ -56,6 +56,7 @@ def prepare_dataframe_for_lstm(df, n_steps):
 
 lookback = 20
 shifted_df = prepare_dataframe_for_lstm(all_data_df, lookback)
+print("data before normalization")
 print(shifted_df.head())
 
 #shifted_df = pd.pivot_table(shifted_df, index=['Date'], columns=['Ticker'])

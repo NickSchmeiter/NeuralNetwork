@@ -11,9 +11,9 @@ Modeling architecture:
 LSTM
 
 Performance criteria: 
-MSE of true vs. predicted stock price increase for test data
+MSE of true vs. predicted stock close for test data
 
 Baseline: 
-MSE of true vs. average price increase over all stocks for test data
+MSE of true vs. predicted stock close over all stocks for test data
 Results
-model which is overfitting? bc of loss = 0.000
+good performance bc of loss = 0.000

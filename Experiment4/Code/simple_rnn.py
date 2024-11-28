@@ -136,7 +136,6 @@ class RNN(nn.Module):
         super(RNN, self).__init__()
         self.layer_1 = rnn.CustomRNN(1, 5) # input_size, hidden_size
         self.layer_2 = rnn.CustomRNN(5, 100) # input_size, hidden_size
-        self.layer_2 = rnn.CustomRNN(5, 100) # input_size, hidden_size
         self.layer_3 = nn.Linear(100, 1) # input_size, output_size
 
     def forward(self, x):

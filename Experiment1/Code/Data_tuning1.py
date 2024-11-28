@@ -44,6 +44,7 @@ while time < end - T:
     subset = all_data_df[ (all_data_df['Date'] >= time) & (all_data_df['Date'] < time + T + timedelta(days=1))]
     table = pd.pivot_table(subset, index=['Date'], columns=['Ticker'])
     table.columns = table.columns.get_level_values(1)
+    print(subset.head())
     table = table.dropna(axis=1)
     if table.shape[1] == 0:
         print(f"No valid data after dropna at time {time}. Skipping...")
